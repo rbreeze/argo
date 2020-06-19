@@ -1243,6 +1243,8 @@ type NodeStatus struct {
 
 	// HostNodeName name of the Kubernetes node on which the Pod is running, if applicable
 	HostNodeName string `json:"hostNodeName,omitempty" protobuf:"bytes,22,rep,name=hostNodeName"`
+
+	Memoized bool `json:"memoized,omitempty"`
 }
 
 func (n Nodes) GetResourcesDuration() ResourcesDuration {
@@ -1657,6 +1659,27 @@ func (tmpl *Template) GetType() TemplateType {
 		return TemplateTypeSuspend
 	}
 	return TemplateTypeUnknown
+}
+
+// GetNodeType returns the type of this template as a Node Type
+//
+func (tmpl *Template) GetNodeType() NodeType {
+	if tmpl.Container != nil {
+		return NodeTypePod
+	}
+	if tmpl.Steps != nil {
+		return NodeTypeSteps
+	}
+	if tmpl.DAG != nil {
+		return NodeTypeDAG
+	}
+	if tmpl.Script != nil {
+		return NodeTypePod
+	}
+	if tmpl.Suspend != nil {
+		return NodeTypeSuspend
+	}
+	return NodeTypePod
 }
 
 // IsPodType returns whether or not the template is a pod type
@@ -2085,6 +2108,8 @@ type Counter struct {
 // Memoization
 type Memoize struct {
 	MaxAge string `json: "maxAge"`
+	Key string `json: "key"`
+	Cache *Cache `json: "cache"`
 }
 
 type Cache struct {

@@ -1385,7 +1385,30 @@ func (woc *wfOperationCtx) executeTemplate(nodeName string, orgTmpl wfv1.Templat
 		woc.updated = true
 	}
 
-	// TODO: check if node is cached here
+	localParams := make(map[string]string)
+	// Inject the pod name. If the pod has a retry strategy, the pod name will be changed and will be injected when it
+	// is determined
+	if resolvedTmpl.IsPodType() && resolvedTmpl.RetryStrategy == nil {
+		localParams[common.LocalVarPodName] = woc.wf.NodeID(nodeName)
+	}
+
+	// Inputs has been processed with arguments already, so pass empty arguments.
+	processedTmpl, err := common.ProcessArgs(resolvedTmpl, &args, woc.globalParams, localParams, false)
+	if err != nil {
+		return woc.initializeNodeOrMarkError(node, nodeName, templateScope, orgTmpl, opts.boundaryID, err), err
+	}
+
+	// If memoization is on, check if node output exists in cache
+	if resolvedTmpl.Memoize != nil {
+		c := NewConfigMapCache()
+		storedOutput, ok := c.Load(resolvedTmpl.Memoize.Key)
+		if (storedOutput != nil && ok != false) {
+			node = woc.initializeCachedNode(nodeName, processedTmpl.GetNodeType(), templateScope, orgTmpl, opts.boundaryID)
+			node.Outputs = storedOutput
+			return node, nil
+		}
+	}
+
 	if node != nil {
 		if node.Fulfilled() {
 			woc.log.Debugf("Node %s already completed", nodeName)
@@ -1414,19 +1437,6 @@ func (woc *wfOperationCtx) executeTemplate(nodeName string, orgTmpl wfv1.Templat
 		woc.log.Warnf("Deadline exceeded")
 		woc.requeue(0)
 		return node, ErrDeadlineExceeded
-	}
-
-	localParams := make(map[string]string)
-	// Inject the pod name. If the pod has a retry strategy, the pod name will be changed and will be injected when it
-	// is determined
-	if resolvedTmpl.IsPodType() && resolvedTmpl.RetryStrategy == nil {
-		localParams[common.LocalVarPodName] = woc.wf.NodeID(nodeName)
-	}
-
-	// Inputs has been processed with arguments already, so pass empty arguments.
-	processedTmpl, err := common.ProcessArgs(resolvedTmpl, &args, woc.globalParams, localParams, false)
-	if err != nil {
-		return woc.initializeNodeOrMarkError(node, nodeName, templateScope, orgTmpl, opts.boundaryID, err), err
 	}
 
 	// Check if we exceeded template or workflow parallelism and immediately return if we did
@@ -1671,9 +1681,39 @@ func (woc *wfOperationCtx) initializeNodeOrMarkError(node *wfv1.NodeStatus, node
 	return woc.initializeNode(nodeName, wfv1.NodeTypeSkipped, templateScope, orgTmpl, boundaryID, wfv1.NodeError, err.Error())
 }
 
-func _ initializeCachedNode() {
-	// TODO: create a node that can be immediately completed
-	// TODO: new function that creates a node status that's completely initialized and marked as finished
+// Creates a node status that's completely initialized and marked as finished
+func (woc *wfOperationCtx) initializeCachedNode(nodeName string, nodeType wfv1.NodeType, templateScope string, orgTmpl wfv1.TemplateReferenceHolder, boundaryID string, messages ...string) *wfv1.NodeStatus {
+	woc.log.Debugf("Initializing node %s from cache: template: %s, boundaryID: %s", nodeName, common.GetTemplateHolderString(orgTmpl), boundaryID)
+	nodeID := woc.wf.NodeID(nodeName)
+	_, ok := woc.wf.Status.Nodes[nodeID]
+	if ok {
+		panic(fmt.Sprint("node %s already initialized", nodeName))
+	}
+	node := wfv1.NodeStatus{
+		ID:            nodeID,
+		Name:          nodeName,
+		TemplateName:  orgTmpl.GetTemplateName(),
+		TemplateRef:   orgTmpl.GetTemplateRef(),
+		TemplateScope: templateScope,
+		Type:          nodeType,
+		BoundaryID:    boundaryID,
+		Phase:         wfv1.NodeSucceeded, // For now we only store succeeded nodes in the cache
+		// TODO: allow failed nodes to be cached in case they completed useful work before failure
+		StartedAt:     metav1.Time{Time: time.Now().UTC()},
+		FinishedAt:    metav1.Time{Time: time.Now().UTC()},
+		Memoized:      true,
+		DisplayName:   nodeName,
+	}
+
+	var message string
+	if len(messages) > 0 {
+		message = fmt.Sprintf(" (message: %s)", messages[0])
+		node.Message = messages[0]
+	}
+	woc.wf.Status.Nodes[nodeID] = node
+	woc.log.Infof("%s cached node %v completed %s%s", node.Type, node.ID, node.Phase, message)
+	woc.updated = true
+	return &node
 }
 
 func (woc *wfOperationCtx) initializeNode(nodeName string, nodeType wfv1.NodeType, templateScope string, orgTmpl wfv1.TemplateReferenceHolder, boundaryID string, phase wfv1.NodePhase, messages ...string) *wfv1.NodeStatus {
