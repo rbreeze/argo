@@ -504,6 +504,9 @@ type Template struct {
 
 	// Metrics are a list of metrics emitted from this template
 	Metrics *Metrics `json:"metrics,omitempty" protobuf:"bytes,35,opt,name=metrics"`
+
+	// Memoize allows templates to use outputs generated from already executed templates
+	Cache *Cache `json:"memoize,omitempty" protobuf:""`
 }
 
 // DEPRECATED: Templates should not be used as TemplateReferenceHolder
