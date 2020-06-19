@@ -1385,6 +1385,7 @@ func (woc *wfOperationCtx) executeTemplate(nodeName string, orgTmpl wfv1.Templat
 		woc.updated = true
 	}
 
+	// TODO: check if node is cached here
 	if node != nil {
 		if node.Fulfilled() {
 			woc.log.Debugf("Node %s already completed", nodeName)
@@ -1668,6 +1669,11 @@ func (woc *wfOperationCtx) initializeNodeOrMarkError(node *wfv1.NodeStatus, node
 		return woc.markNodeError(nodeName, err)
 	}
 	return woc.initializeNode(nodeName, wfv1.NodeTypeSkipped, templateScope, orgTmpl, boundaryID, wfv1.NodeError, err.Error())
+}
+
+func _ initializeCachedNode() {
+	// TODO: create a node that can be immediately completed
+	// TODO: new function that creates a node status that's completely initialized and marked as finished
 }
 
 func (woc *wfOperationCtx) initializeNode(nodeName string, nodeType wfv1.NodeType, templateScope string, orgTmpl wfv1.TemplateReferenceHolder, boundaryID string, phase wfv1.NodePhase, messages ...string) *wfv1.NodeStatus {

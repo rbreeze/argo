@@ -2,28 +2,27 @@ package controller
 
 import (
 	"crypto/sha1"
+	wfv1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 )
 
 type Cache interface {
-	GenerateKey(template string, input string);
-	Load(key string);
-	Save(key string, value string);
+	Load(key []byte);
+	Save(key []byte, value string);
 }
 
-type cache struct {
+type configMapCache struct {
 }
 
-func (c* cache) GenerateKey(template string, input string) []byte {
+func generateKey(template *wfv1.Template) []byte {
 	h := sha1.New()
-	h.Write([]byte(template+input))
+	h.Write([]byte(template))
 	return h.Sum(nil)
 }
 
-func Load(key []byte) {
+func (c *configMapCache) Load(key []byte) {
 
 }
 
-func Save(key []byte, value string) {
+func (c *configMapCache) Save(key []byte, value string) {
 
 }
-

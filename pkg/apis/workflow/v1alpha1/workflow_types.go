@@ -506,7 +506,7 @@ type Template struct {
 	Metrics *Metrics `json:"metrics,omitempty" protobuf:"bytes,35,opt,name=metrics"`
 
 	// Memoize allows templates to use outputs generated from already executed templates
-	Cache *Cache `json:"memoize,omitempty" protobuf:""`
+	Memoize *Memoize `json:"memoize,omitempty"`
 }
 
 // DEPRECATED: Templates should not be used as TemplateReferenceHolder
@@ -2080,4 +2080,13 @@ type Histogram struct {
 type Counter struct {
 	// Value is the value of the metric
 	Value string `json:"value" protobuf:"bytes,1,opt,name=value"`
+}
+
+// Memoization
+type Memoize struct {
+	MaxAge string `json: "maxAge"`
+}
+
+type Cache struct {
+	ConfigMapName *apiv1.ConfigMapKeySelector `json: "configMapName"`
 }
