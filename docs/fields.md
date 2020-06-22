@@ -2228,6 +2228,8 @@ Inputs are the mechanism for passing parameters, artifacts, volumes from one tem
 
 - [`loops.yaml`](../examples/loops.yaml)
 
+- [`memoize.yaml`](../examples/memoize.yaml)
+
 - [`nested-workflow.yaml`](../examples/nested-workflow.yaml)
 
 - [`node-selector.yaml`](../examples/node-selector.yaml)
