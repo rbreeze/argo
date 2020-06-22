@@ -1398,9 +1398,11 @@ func (woc *wfOperationCtx) executeTemplate(nodeName string, orgTmpl wfv1.Templat
 		return woc.initializeNodeOrMarkError(node, nodeName, templateScope, orgTmpl, opts.boundaryID, err), err
 	}
 
+	var c *configMapCache
+
 	// If memoization is on, check if node output exists in cache
 	if resolvedTmpl.Memoize != nil {
-		c := NewConfigMapCache()
+		c = NewConfigMapCache()
 		storedOutput, ok := c.Load(resolvedTmpl.Memoize.Key)
 		if (storedOutput != nil && ok != false) {
 			node = woc.initializeCachedNode(nodeName, processedTmpl.GetNodeType(), templateScope, orgTmpl, opts.boundaryID)
@@ -1559,6 +1561,9 @@ func (woc *wfOperationCtx) executeTemplate(nodeName string, orgTmpl wfv1.Templat
 		node = retryNode
 	}
 
+	if resolvedTmpl.Memoize != nil {
+		c.Save(resolvedTmpl.Memoize.Key, node.Outputs)
+	}
 	return node, nil
 }
 

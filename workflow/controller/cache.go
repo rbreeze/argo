@@ -3,6 +3,7 @@ package controller
 import (
 	"crypto/sha1"
 	wfv1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
+	v1 "k8s.io/api/core/v1"
 )
 
 type Cache interface {
@@ -25,10 +26,13 @@ func generateKey(template *wfv1.Template) []byte {
 
 func (c *configMapCache) Load(key string) (*wfv1.Outputs, bool) {
 	// TODO: return value stored in ConfigMap cache under key, or nil if none exists
+
 	return nil, false
 }
 
-func (c *configMapCache) Save(key string, value string) bool {
+func (c *configMapCache) Save(key string, value *wfv1.Outputs) bool {
 	// TODO: store value to ConfigMap cache
-	return false
+	var cm *v1.ConfigMap
+	cm.Name = key
+	return true
 }
