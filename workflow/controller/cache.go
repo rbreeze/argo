@@ -26,7 +26,6 @@ func generateKey(template *wfv1.Template) []byte {
 
 func (c *configMapCache) Load(key string) (*wfv1.Outputs, bool) {
 	// TODO: return value stored in ConfigMap cache under key, or nil if none exists
-
 	return nil, false
 }
 
