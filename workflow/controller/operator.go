@@ -1401,8 +1401,7 @@ func (woc *wfOperationCtx) executeTemplate(nodeName string, orgTmpl wfv1.Templat
 
 	// If memoization is on, check if node output exists in cache
 	if resolvedTmpl.Memoize != nil {
-		c = NewConfigMapCache(woc.controller.namespace, woc.controller.kubeclientset)
-		log.Infof("REM MAXAGE %s", resolvedTmpl.Memoize.MaxAge)
+		c = NewConfigMapCache(resolvedTmpl.Memoize.Cache.ConfigMapName.Name, woc.controller.namespace, woc.controller.kubeclientset)
 		storedOutput, ok := c.Load(resolvedTmpl.Memoize.Key)
 		if (storedOutput != nil && ok != false) {
 			node = woc.initializeCachedNode(nodeName, processedTmpl.GetNodeType(), templateScope, orgTmpl, opts.boundaryID)

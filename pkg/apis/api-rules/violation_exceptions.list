@@ -32,7 +32,6 @@ API rule violation: list_type_missing,github.com/argoproj/argo/pkg/apis/workflow
 API rule violation: list_type_missing,github.com/argoproj/argo/pkg/apis/workflow/v1alpha1,WorkflowSpec,Volumes
 API rule violation: list_type_missing,github.com/argoproj/argo/pkg/apis/workflow/v1alpha1,WorkflowStatus,PersistentVolumeClaims
 API rule violation: list_type_missing,github.com/argoproj/argo/pkg/apis/workflow/v1alpha1,WorkflowStep,WithItems
-API rule violation: names_match,github.com/argoproj/argo/pkg/apis/workflow/v1alpha1,Cache,ConfigMapName
 API rule violation: names_match,github.com/argoproj/argo/pkg/apis/workflow/v1alpha1,Item,BoolVal
 API rule violation: names_match,github.com/argoproj/argo/pkg/apis/workflow/v1alpha1,Item,ListVal
 API rule violation: names_match,github.com/argoproj/argo/pkg/apis/workflow/v1alpha1,Item,MapVal
@@ -45,9 +44,6 @@ API rule violation: names_match,github.com/argoproj/argo/pkg/apis/workflow/v1alp
 API rule violation: names_match,github.com/argoproj/argo/pkg/apis/workflow/v1alpha1,ItemValue,NumVal
 API rule violation: names_match,github.com/argoproj/argo/pkg/apis/workflow/v1alpha1,ItemValue,StrVal
 API rule violation: names_match,github.com/argoproj/argo/pkg/apis/workflow/v1alpha1,ItemValue,Type
-API rule violation: names_match,github.com/argoproj/argo/pkg/apis/workflow/v1alpha1,Memoize,Cache
-API rule violation: names_match,github.com/argoproj/argo/pkg/apis/workflow/v1alpha1,Memoize,Key
-API rule violation: names_match,github.com/argoproj/argo/pkg/apis/workflow/v1alpha1,Memoize,MaxAge
 API rule violation: names_match,github.com/argoproj/argo/pkg/apis/workflow/v1alpha1,ParallelSteps,Steps
 API rule violation: names_match,github.com/argoproj/argo/pkg/apis/workflow/v1alpha1,SubmitOpts,Entrypoint
 API rule violation: names_match,github.com/argoproj/argo/pkg/apis/workflow/v1alpha1,WorkflowStatus,StoredWorkflowSpec

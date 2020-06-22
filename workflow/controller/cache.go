@@ -16,13 +16,17 @@ type Cache interface {
 }
 
 type configMapCache struct {
+	configMapName string
 	kubeClient kubernetes.Interface
 	namespace string
 }
 
-func NewConfigMapCache(ns string, ki kubernetes.Interface) *configMapCache {
-
-	return &configMapCache{namespace: ns, kubeClient: ki}
+func NewConfigMapCache(cm string, ns string, ki kubernetes.Interface) *configMapCache {
+	return &configMapCache{
+		configMapName: cm,
+		namespace: ns,
+		kubeClient: ki,
+	}
 }
 
 func generateKey(template *wfv1.Template) []byte {
@@ -33,13 +37,24 @@ func generateKey(template *wfv1.Template) []byte {
 
 func (c *configMapCache) Load(key string) (*wfv1.Outputs, bool) {
 	// TODO: return value stored in ConfigMap cache under key, or nil if none exists
-	log.Infof("REM Loading from cache %s...\n", key)
-	cm, err := c.kubeClient.CoreV1().ConfigMaps(c.namespace).Get(key, metav1.GetOptions{})
-	if err != nil || cm == nil {
+	log.Infof("REM Loading key %s from cache %s...", key, c.configMapName)
+	cm, err := c.kubeClient.CoreV1().ConfigMaps(c.namespace).Get(c.configMapName, metav1.GetOptions{})
+	if err != nil {
+		log.Infof("Error loading ConfigMap %s: %s", c.configMapName, err)
 		return nil, false
 	}
-	entry := make(map[string]interface{})
-	err = json.Unmarshal([]byte(cm.Data[key]), &entry)
+	if cm == nil {
+		log.Infof("Cache miss: ConfigMap does not exist")
+		return nil, false
+	}
+	log.Infof("ConfigMap %s loaded", c.configMapName)
+	entry, ok := cm.Data[key];
+	if !ok {
+		log.Infof("Cache miss: Entry for %s doesn't exist", key)
+		return nil, false
+	}
+	rawEntry := make(map[string]interface{})
+	err = json.Unmarshal([]byte(entry), &rawEntry)
 	if err != nil {
 		panic(err)
 	}
@@ -52,21 +67,33 @@ func (c *configMapCache) Load(key string) (*wfv1.Outputs, bool) {
 
 func (c *configMapCache) Save(key string, value *wfv1.Outputs) bool {
 	// TODO: store value to ConfigMap cache
-	wfname := "whalesay"
 	log.Infof("Saving to cache %s...\n", key)
 	outputsJSON, err := json.Marshal(value)
 	if err != nil {
 		return false
 	}
-	_, err = c.kubeClient.CoreV1().ConfigMaps(c.namespace).Create(
-		&apiv1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: wfname + "-cache",
-			},
-			Data: map[string]string{
-				wfname + "." + "key": string(outputsJSON),
-			},
+	cm, err := c.kubeClient.CoreV1().ConfigMaps(c.namespace).Get(c.configMapName, metav1.GetOptions{})
+	if err != nil {
+		log.Infof("Error saving to cache: %s", err)
+		return false
+	}
+	opts := apiv1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: c.configMapName,
 		},
-	)
+		Data: map[string]string{
+			key: string(outputsJSON),
+		},
+	}
+	if cm == nil {
+		_, err = c.kubeClient.CoreV1().ConfigMaps(c.namespace).Create(&opts)
+	} else {
+		_, err = c.kubeClient.CoreV1().ConfigMaps(c.namespace).Update(&opts)
+	}
+
+	if err != nil {
+		log.Infof("Error creating new cache entry for %s: %s", key, err)
+		return false
+	}
 	return true
 }

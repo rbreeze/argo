@@ -19,7 +19,7 @@ spec:
       maxAge: 1d
       cache:
         configMapName:
-          key: whalesay-cache
+          name: whalesay-cache
     container:
       image: docker/whalesay:latest
       command: [sh, -c]

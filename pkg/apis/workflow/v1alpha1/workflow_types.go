@@ -2114,11 +2114,11 @@ type Counter struct {
 
 // Memoization
 type Memoize struct {
-	MaxAge string `json: "maxAge"`
-	Key string `json: "key"`
-	Cache *Cache `json: "cache"`
+	MaxAge string `json:"maxAge"`
+	Key string `json:"key"`
+	Cache *Cache `json:"cache"`
 }
 
 type Cache struct {
-	ConfigMapName *apiv1.ConfigMapKeySelector `json: "configMapName"`
+	ConfigMapName *apiv1.ConfigMapKeySelector `json:"configMapName"`
 }
