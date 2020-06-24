@@ -1414,10 +1414,7 @@ func (woc *wfOperationCtx) executeTemplate(nodeName string, orgTmpl wfv1.Templat
 	var c *configMapCache
 
 	// If memoization is on, check if node output exists in cache
-	if resolvedTmpl.Memoize != nil {
-		if node != nil {
-			node.Memoized = true
-		}
+	if resolvedTmpl.Memoize != nil && node == nil {
 		c = NewConfigMapCache(resolvedTmpl.Memoize.Cache.ConfigMapName.Name, woc.controller.namespace, woc.controller.kubeclientset)
 		storedOutput, ok := c.Load(resolvedTmpl.Memoize.Key)
 		if (storedOutput != nil && ok != false) {
