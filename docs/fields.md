@@ -90,6 +90,8 @@ Workflow is the definition of a workflow resource
 
 - [`global-parameters.yaml`](../examples/global-parameters.yaml)
 
+- [`handle-large-output-results.yaml`](../examples/handle-large-output-results.yaml)
+
 - [`hdfs-artifact.yaml`](../examples/hdfs-artifact.yaml)
 
 - [`hello-hybrid.yaml`](../examples/hello-hybrid.yaml)
@@ -390,6 +392,8 @@ WorkflowSpec is the specification of a Workflow.
 - [`global-outputs.yaml`](../examples/global-outputs.yaml)
 
 - [`global-parameters.yaml`](../examples/global-parameters.yaml)
+
+- [`handle-large-output-results.yaml`](../examples/handle-large-output-results.yaml)
 
 - [`hdfs-artifact.yaml`](../examples/hdfs-artifact.yaml)
 
@@ -703,6 +707,8 @@ CronWorkflowSpec is the specification of a CronWorkflow
 
 - [`global-parameters.yaml`](../examples/global-parameters.yaml)
 
+- [`handle-large-output-results.yaml`](../examples/handle-large-output-results.yaml)
+
 - [`hdfs-artifact.yaml`](../examples/hdfs-artifact.yaml)
 
 - [`hello-hybrid.yaml`](../examples/hello-hybrid.yaml)
@@ -980,6 +986,8 @@ WorkflowTemplateSpec is a spec of WorkflowTemplate.
 
 - [`global-parameters.yaml`](../examples/global-parameters.yaml)
 
+- [`handle-large-output-results.yaml`](../examples/handle-large-output-results.yaml)
+
 - [`hdfs-artifact.yaml`](../examples/hdfs-artifact.yaml)
 
 - [`hello-hybrid.yaml`](../examples/hello-hybrid.yaml)
@@ -1233,6 +1241,8 @@ Arguments to a template
 
 - [`global-parameters.yaml`](../examples/global-parameters.yaml)
 
+- [`handle-large-output-results.yaml`](../examples/handle-large-output-results.yaml)
+
 - [`hdfs-artifact.yaml`](../examples/hdfs-artifact.yaml)
 
 - [`influxdb-ci.yaml`](../examples/influxdb-ci.yaml)
@@ -1465,6 +1475,8 @@ Template is a reusable and composable unit of execution in a workflow
 - [`global-outputs.yaml`](../examples/global-outputs.yaml)
 
 - [`global-parameters.yaml`](../examples/global-parameters.yaml)
+
+- [`handle-large-output-results.yaml`](../examples/handle-large-output-results.yaml)
 
 - [`hdfs-artifact.yaml`](../examples/hdfs-artifact.yaml)
 
@@ -1764,6 +1776,8 @@ Outputs hold parameters, artifacts, and results from a step
 
 - [`global-outputs.yaml`](../examples/global-outputs.yaml)
 
+- [`handle-large-output-results.yaml`](../examples/handle-large-output-results.yaml)
+
 - [`hdfs-artifact.yaml`](../examples/hdfs-artifact.yaml)
 
 - [`influxdb-ci.yaml`](../examples/influxdb-ci.yaml)
@@ -1828,6 +1842,8 @@ Artifact indicates an artifact to place at a specified path
 - [`fun-with-gifs.yaml`](../examples/fun-with-gifs.yaml)
 
 - [`global-outputs.yaml`](../examples/global-outputs.yaml)
+
+- [`handle-large-output-results.yaml`](../examples/handle-large-output-results.yaml)
 
 - [`hdfs-artifact.yaml`](../examples/hdfs-artifact.yaml)
 
@@ -1923,6 +1939,8 @@ Parameter indicate a passed string parameter to a service template with an optio
 - [`global-outputs.yaml`](../examples/global-outputs.yaml)
 
 - [`global-parameters.yaml`](../examples/global-parameters.yaml)
+
+- [`handle-large-output-results.yaml`](../examples/handle-large-output-results.yaml)
 
 - [`influxdb-ci.yaml`](../examples/influxdb-ci.yaml)
 
@@ -2196,6 +2214,8 @@ Inputs are the mechanism for passing parameters, artifacts, volumes from one tem
 
 - [`global-outputs.yaml`](../examples/global-outputs.yaml)
 
+- [`handle-large-output-results.yaml`](../examples/handle-large-output-results.yaml)
+
 - [`hdfs-artifact.yaml`](../examples/hdfs-artifact.yaml)
 
 - [`influxdb-ci.yaml`](../examples/influxdb-ci.yaml)
@@ -2368,6 +2388,8 @@ Pod metdata
 - [`global-outputs.yaml`](../examples/global-outputs.yaml)
 
 - [`global-parameters.yaml`](../examples/global-parameters.yaml)
+
+- [`handle-large-output-results.yaml`](../examples/handle-large-output-results.yaml)
 
 - [`hdfs-artifact.yaml`](../examples/hdfs-artifact.yaml)
 
@@ -2729,6 +2751,8 @@ WorkflowStep is a reference to a template to execute in a series of step
 - [`fun-with-gifs.yaml`](../examples/fun-with-gifs.yaml)
 
 - [`global-outputs.yaml`](../examples/global-outputs.yaml)
+
+- [`handle-large-output-results.yaml`](../examples/handle-large-output-results.yaml)
 
 - [`hdfs-artifact.yaml`](../examples/hdfs-artifact.yaml)
 
@@ -3092,6 +3116,8 @@ ValueFrom describes a location in which to obtain the value to a parameter
 
 - [`global-outputs.yaml`](../examples/global-outputs.yaml)
 
+- [`handle-large-output-results.yaml`](../examples/handle-large-output-results.yaml)
+
 - [`k8s-jobs.yaml`](../examples/k8s-jobs.yaml)
 
 - [`k8s-orchestration.yaml`](../examples/k8s-orchestration.yaml)
@@ -3348,6 +3374,8 @@ Sequence expands a workflow step into numeric range
 
 - [`cron-backfill.yaml`](../examples/cron-backfill.yaml)
 
+- [`handle-large-output-results.yaml`](../examples/handle-large-output-results.yaml)
+
 - [`loops-sequence.yaml`](../examples/loops-sequence.yaml)
 
 - [`work-avoidance.yaml`](../examples/work-avoidance.yaml)
@@ -3486,6 +3514,8 @@ ObjectMeta is metadata that all persisted resources must have, which includes al
 - [`global-outputs.yaml`](../examples/global-outputs.yaml)
 
 - [`global-parameters.yaml`](../examples/global-parameters.yaml)
+
+- [`handle-large-output-results.yaml`](../examples/handle-large-output-results.yaml)
 
 - [`hdfs-artifact.yaml`](../examples/hdfs-artifact.yaml)
 
@@ -3958,6 +3988,8 @@ A single application container that you want to run within a pod.
 - [`global-outputs.yaml`](../examples/global-outputs.yaml)
 
 - [`global-parameters.yaml`](../examples/global-parameters.yaml)
+
+- [`handle-large-output-results.yaml`](../examples/handle-large-output-results.yaml)
 
 - [`hdfs-artifact.yaml`](../examples/hdfs-artifact.yaml)
 
@@ -4573,6 +4605,8 @@ PersistentVolumeClaimSpec describes the common attributes of storage devices and
 
 - [`global-parameters.yaml`](../examples/global-parameters.yaml)
 
+- [`handle-large-output-results.yaml`](../examples/handle-large-output-results.yaml)
+
 - [`hdfs-artifact.yaml`](../examples/hdfs-artifact.yaml)
 
 - [`hello-hybrid.yaml`](../examples/hello-hybrid.yaml)
@@ -5136,6 +5170,8 @@ EnvVarSource represents a source for the value of an EnvVar.
 
 - [`global-outputs.yaml`](../examples/global-outputs.yaml)
 
+- [`handle-large-output-results.yaml`](../examples/handle-large-output-results.yaml)
+
 - [`k8s-jobs.yaml`](../examples/k8s-jobs.yaml)
 
 - [`k8s-orchestration.yaml`](../examples/k8s-orchestration.yaml)
@@ -5544,6 +5580,8 @@ ListMeta describes metadata that synthetic resources must have, including lists 
 - [`global-outputs.yaml`](../examples/global-outputs.yaml)
 
 - [`global-parameters.yaml`](../examples/global-parameters.yaml)
+
+- [`handle-large-output-results.yaml`](../examples/handle-large-output-results.yaml)
 
 - [`hdfs-artifact.yaml`](../examples/hdfs-artifact.yaml)
 
