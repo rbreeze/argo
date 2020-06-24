@@ -54,50 +54,52 @@ func generateKey(template *wfv1.Template) []byte {
 	return h.Sum(nil)
 }
 
+func (c *configMapCache) Clear() bool {
+	err := c.kubeClient.CoreV1().ConfigMaps(c.namespace).Delete(c.configMapName, &metav1.DeleteOptions{})
+	if err != nil {
+		log.Infof("Error deleting ConfigMap cache %s: %s", c.configMapName, err)
+		return false
+	}
+	return true
+}
+
 func (c *configMapCache) Load(key string) (*wfv1.Outputs, bool) {
-	log.Infof("got here")
-	log.Infof("REM Got here. Key: %s", key)
-	log.Infof("REM ConfigMapName: %s", c.configMapName)
-	log.Infof("REM CACHE LOAD Loading key %s from cache %s...", key, c.configMapName)
 	cm, err := c.kubeClient.CoreV1().ConfigMaps(c.namespace).Get(c.configMapName, metav1.GetOptions{})
 	if err != nil {
-		log.Infof("Error loading ConfigMap %s: %s", c.configMapName, err)
+		log.Infof("Error loading ConfigMap cache %s: %s", c.configMapName, err)
 		return nil, false
 	}
 	if cm == nil {
 		log.Infof("Cache miss: ConfigMap does not exist")
 		return nil, false
 	}
-	log.Infof("ConfigMap %s loaded", c.configMapName)
+	log.Infof("ConfigMap cache %s loaded", c.configMapName)
 	rawEntry, ok := cm.Data[key];
 	if !ok || rawEntry == "" {
 		log.Infof("Cache miss: Entry for %s doesn't exist", key)
 		return nil, false
 	}
-	// What do i want to do here?
-	// the cache entry is a plain JSON string
-	// I want to Unmarshal the JSON string into a Go var
-	// the json contains a map of strings to interfaces
-	// one of them is an Output
-	// so I want to take the interface{} and cast it to a wfv1.Outputs
-	// so that I can access it like: outputs.parameters
 	var entry CacheEntry
 	err = json.Unmarshal([]byte(rawEntry), &entry)
 	if err != nil {
 		panic(err)
 	}
 	outputs := entry.Outputs
-	log.Infof("REM CACHE LOAD Cache: %s", outputs)
+	log.Infof("ConfigMap cache %s hit for %s", c.configMapName, key)
 	return &outputs, true
 }
 
 func (c *configMapCache) Save(key string, value *wfv1.Outputs) bool {
-	log.Infof("Saving to cache %s...\n", key)
-	//outputsJSON, err := json.Marshal(value)
-	//if err != nil {
-	//	return false
-	//}
+	log.Infof("Saving to cache %s...", key)
 	cm, err := c.kubeClient.CoreV1().ConfigMaps(c.namespace).Get(c.configMapName, metav1.GetOptions{})
+	if len(cm.Data) == 0 {
+		_, err = c.kubeClient.CoreV1().ConfigMaps(c.namespace).Create(&apiv1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: c.configMapName,
+				},
+			},
+		)
+	}
 	if err != nil {
 		log.Infof("Error saving to cache: %s", err)
 		return false
@@ -113,11 +115,8 @@ func (c *configMapCache) Save(key string, value *wfv1.Outputs) bool {
 			key: string(entryJSON),
 		},
 	}
-	if cm == nil {
-		_, err = c.kubeClient.CoreV1().ConfigMaps(c.namespace).Create(&opts)
-	} else {
-		_, err = c.kubeClient.CoreV1().ConfigMaps(c.namespace).Update(&opts)
-	}
+
+	_, err = c.kubeClient.CoreV1().ConfigMaps(c.namespace).Update(&opts)
 
 	if err != nil {
 		log.Infof("Error creating new cache entry for %s: %s", key, err)
