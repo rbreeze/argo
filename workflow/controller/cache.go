@@ -10,13 +10,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-var sampleVal string = "Hello world"
-
-var sampleParam = wfv1.Parameter{
-	Name: "hello",
-	Value: &sampleVal,
-}
-
 var sampleEntry = CacheEntry{
 	ExpiresAt: "2020-06-18T17:11:05Z",
 	NodeID: "memoize-abx4124-123129321123",
@@ -104,7 +97,7 @@ func (c *configMapCache) Save(key string, value *wfv1.Outputs) bool {
 		log.Infof("Error saving to cache: %s", err)
 		return false
 	}
-	sampleEntry.Outputs.Parameters = append(sampleEntry.Outputs.Parameters, sampleParam)
+	sampleEntry.Outputs = *value
 	entryJSON, err := json.Marshal(sampleEntry)
 	log.Infof("REM CACHE SAVE New Entry: %s", entryJSON)
 	opts := apiv1.ConfigMap{

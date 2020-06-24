@@ -15,7 +15,7 @@ spec:
       parameters:
       - name: message
     memoize:
-      key: "myotherkey4"
+      key: "myotherkey5"
       maxAge: 1d
       cache:
         configMapName:
