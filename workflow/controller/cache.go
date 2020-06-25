@@ -17,8 +17,8 @@ var sampleEntry = CacheEntry{
 }
 
 type Cache interface {
-	Load(key []byte);
-	Save(key []byte, value string);
+	Load(key []byte) (*wfv1.Outputs, bool)
+	Save(key []byte, value string) bool
 }
 
 type CacheEntry struct {
