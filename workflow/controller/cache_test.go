@@ -2,10 +2,9 @@ package controller
 
 import (
 	wfv1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
-	"github.com/argoproj/argo/test"
-	"k8s.io/client-go/kubernetes"
-	"testing"
+	"github.com/stretchr/testify/assert"
 	mock "github.com/stretchr/testify/mock"
+	"testing"
 )
 
 type MockCache struct {
@@ -19,15 +18,9 @@ var MockParam = wfv1.Parameter{
 	Value: &MockParamValue,
 }
 
-func (_m *MockCache) NewConfigMapCache(cm string, ns string, ki kubernetes.Interface) *configMapCache {
-	ret := _m.Called(cm, ns, ki)
-	res := ret.Get(0)
-	return res.(*configMapCache)
-}
-
 func (_m *MockCache) Load(key []byte) (*wfv1.Outputs, bool) {
 	outputs := wfv1.Outputs{}
-	outputs = append(outputs, MockParam)
+	outputs.Parameters = append(outputs.Parameters, MockParam)
 	return &outputs, true
 }
 
@@ -36,9 +29,13 @@ func (_m *MockCache) Save(key []byte, value string) bool {
 }
 
 func TestCacheLoad(t *testing.T) {
-	mockCache := mocks.ConfigMapCache{}
+	mc := MockCache{}
+	entry, ok := mc.Load([]byte(""))
+	assert.Greater(t, len(entry.Parameters), 0)
+	assert.True(t, ok)
 }
 
 func TestCacheSave(t *testing.T) {
-
+	mc := MockCache{}
+	assert.True(t, mc.Save([]byte(""), ""))
 }
