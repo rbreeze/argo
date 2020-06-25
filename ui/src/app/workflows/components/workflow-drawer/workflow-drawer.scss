@@ -2,13 +2,11 @@
 
 .workflow-drawer {
   height: 100%;
-  font-size: 13px;
+  font-size: .8125em;
   background-color: $argo-color-gray-1;
+  margin-top: -8px;
   padding: 1.5em 15px;
   border-radius: 0 0 3px 3px;
-  line-height: 30px;
-  width: 100%;
-  border-top: 1px solid $argo-color-gray-3;
 
   &__section {
     padding: 1em 0;
@@ -32,7 +30,7 @@
   &__message {
 
     &--label {
-      margin-bottom: 1em;
+      margin-bottom: 1em; 
     }
 
     &--content {
@@ -43,7 +41,7 @@
 
   &__labels {
     &--list {
-      margin-top: 0.5em;
+      margin-top: 0.5em; 
     }
   }
 
