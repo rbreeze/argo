@@ -1435,7 +1435,6 @@ func (woc *wfOperationCtx) executeTemplate(nodeName string, orgTmpl wfv1.Templat
 		storedOutput, ok := c.Load(processedTmpl.Memoize.Key)
 		if (storedOutput != nil && ok != false) {
 			node = woc.initializeCacheHitNode(nodeName, processedTmpl.GetNodeType(), templateScope, orgTmpl, opts.boundaryID, storedOutput)
-			log.Infof("Returning cached node with outputs: %s", node.Outputs)
 			return node, nil
 		}
 	}

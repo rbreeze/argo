@@ -1,14 +1,13 @@
 package controller
 
 import (
-	"crypto/sha1"
 	"encoding/json"
 	wfv1 "github.com/argoproj/argo/pkg/apis/workflow/v1alpha1"
 	log "github.com/sirupsen/logrus"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"strings"
+	"regexp"
 )
 
 var sampleEntry = CacheEntry{
@@ -42,10 +41,15 @@ func NewConfigMapCache(cm string, ns string, ki kubernetes.Interface) *configMap
 	}
 }
 
-func generateKey(template *wfv1.Template) []byte {
-	h := sha1.New()
-	h.Write([]byte(template.Name))
-	return h.Sum(nil)
+func validateCacheKey(key string) string {
+	log.Infof("Validating cache key %s", key)
+	reg, err := regexp.Compile("[^-._a-zA-Z0-9]+")
+    if err != nil {
+        log.Fatal(err)
+    }
+    s := reg.ReplaceAllString(key, "-")
+    log.Info(s)
+    return s
 }
 
 func (c *configMapCache) Clear() bool {
@@ -68,7 +72,7 @@ func (c *configMapCache) Load(key string) (*wfv1.Outputs, bool) {
 		return nil, false
 	}
 	log.Infof("ConfigMap cache %s loaded", c.configMapName)
-	key = strings.ReplaceAll(key, " ", "-")
+	key = validateCacheKey(key)
 	rawEntry, ok := cm.Data[key];
 	if !ok || rawEntry == "" {
 		log.Infof("Cache miss: Entry for %s doesn't exist", key)
@@ -101,7 +105,7 @@ func (c *configMapCache) Save(key string, value *wfv1.Outputs) bool {
 	}
 	sampleEntry.Outputs = *value
 	entryJSON, err := json.Marshal(sampleEntry)
-	key = strings.ReplaceAll(key, " ", "-")
+	key = validateCacheKey(key)
 	opts := apiv1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: c.configMapName,
