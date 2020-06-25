@@ -32,7 +32,7 @@ func (_m *MockCache) Load(key []byte) (*wfv1.Outputs, bool) {
 }
 
 func (_m *MockCache) Save(key []byte, value string) bool {
-
+	return true
 }
 
 func TestCacheLoad(t *testing.T) {

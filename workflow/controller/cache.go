@@ -8,6 +8,7 @@ import (
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"strings"
 )
 
 var sampleEntry = CacheEntry{
@@ -67,6 +68,7 @@ func (c *configMapCache) Load(key string) (*wfv1.Outputs, bool) {
 		return nil, false
 	}
 	log.Infof("ConfigMap cache %s loaded", c.configMapName)
+	key = strings.ReplaceAll(key, " ", "-")
 	rawEntry, ok := cm.Data[key];
 	if !ok || rawEntry == "" {
 		log.Infof("Cache miss: Entry for %s doesn't exist", key)
@@ -85,7 +87,7 @@ func (c *configMapCache) Load(key string) (*wfv1.Outputs, bool) {
 func (c *configMapCache) Save(key string, value *wfv1.Outputs) bool {
 	log.Infof("Saving to cache %s...", key)
 	cm, err := c.kubeClient.CoreV1().ConfigMaps(c.namespace).Get(c.configMapName, metav1.GetOptions{})
-	if len(cm.Data) == 0 && err != nil{
+	if len(cm.Data) == 0 && err != nil {
 		_, err = c.kubeClient.CoreV1().ConfigMaps(c.namespace).Create(&apiv1.ConfigMap{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: c.configMapName,
@@ -99,6 +101,7 @@ func (c *configMapCache) Save(key string, value *wfv1.Outputs) bool {
 	}
 	sampleEntry.Outputs = *value
 	entryJSON, err := json.Marshal(sampleEntry)
+	key = strings.ReplaceAll(key, " ", "-")
 	opts := apiv1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: c.configMapName,
