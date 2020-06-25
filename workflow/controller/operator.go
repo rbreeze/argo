@@ -1037,11 +1037,26 @@ func (woc *wfOperationCtx) assessNodeStatus(pod *apiv1.Pod, node *wfv1.NodeStatu
 				log.Errorf("Failed to create template context for node %s", node.ID)
 				return nil
 			}
-			_, tmpl, _, err := tmplCtx.ResolveTemplate(node)
+			_, resolvedTmpl, _, err := tmplCtx.ResolveTemplate(node)
 			if err != nil {
 				log.Errorf("Failed to resolve template for node %s", node.ID)
 				return nil
 			}
+
+			localParams := make(map[string]string)
+			_, localArgs, err := woc.loadExecutionSpec()
+			woc.setGlobalParameters(localArgs)
+			// Inject the pod name. If the pod has a retry strategy, the pod name will be changed and will be injected when it
+			// is determined
+			if resolvedTmpl.IsPodType() && resolvedTmpl.RetryStrategy == nil {
+				localParams[common.LocalVarPodName] = woc.wf.NodeID(node.Name)
+			}
+
+			tmpl, err := common.ProcessArgs(resolvedTmpl, &localArgs, woc.globalParams, localParams, false)
+			if err != nil {
+				log.Errorf("Failed to process template for node %s: %s", node.ID, err)
+			}
+
 			if tmpl.Memoize != nil {
 				c := NewConfigMapCache(tmpl.Memoize.Cache.ConfigMapName.Name, woc.controller.namespace, woc.controller.kubeclientset)
 				c.Save(tmpl.Memoize.Key, node.Outputs)
@@ -1417,7 +1432,7 @@ func (woc *wfOperationCtx) executeTemplate(nodeName string, orgTmpl wfv1.Templat
 	// If memoization is on, check if node output exists in cache
 	if resolvedTmpl.Memoize != nil && node == nil {
 		c = NewConfigMapCache(resolvedTmpl.Memoize.Cache.ConfigMapName.Name, woc.controller.namespace, woc.controller.kubeclientset)
-		storedOutput, ok := c.Load(resolvedTmpl.Memoize.Key)
+		storedOutput, ok := c.Load(processedTmpl.Memoize.Key)
 		if (storedOutput != nil && ok != false) {
 			node = woc.initializeCacheHitNode(nodeName, processedTmpl.GetNodeType(), templateScope, orgTmpl, opts.boundaryID, storedOutput)
 			log.Infof("Returning cached node with outputs: %s", node.Outputs)
