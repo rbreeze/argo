@@ -48,7 +48,7 @@ type configMapClient struct {
 	kubeClient kubernetes.Interface
 }
 
-func NewConfigMapCache(cm string, ns string, ki kubernetes.Interface) Cache {
+func NewConfigMapCache(cm string, ns string, ki kubernetes.Interface) *configMapCache {
 	cmc := configMapClient{
 		namespace: ns,
 		kubeClient: ki,
