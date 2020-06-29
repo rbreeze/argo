@@ -56,6 +56,7 @@ func NewCommand() *cobra.Command {
 	command.AddCommand(NewVersionCommand())
 	command.AddCommand(template.NewTemplateCommand())
 	command.AddCommand(cron.NewCronWorkflowCommand())
+	command.AddCommand(NewTourCommand())
 	command.AddCommand(clustertemplate.NewClusterTemplateCommand())
 
 	client.AddKubectlFlagsToCmd(command)
