@@ -12,14 +12,21 @@ type lesson struct {
 	num int;
 	title string;
 	description string;
-	sections []string;
+	sections []section;
+}
+
+type section struct {
+	content string;
 	expected string;
 }
 
 type Lesson interface {
 	Start()
-	AcceptCommand()
 	StepThroughSections()
+}
+
+type Section interface {
+	AcceptCommand()
 }
 
 func (l *lesson) Start() {
@@ -36,23 +43,30 @@ func checkError(err error) {
 
 func printAndWait(s string) {
 	fmt.Println(s)
-	fmt.Println("Press ENTER to continue")
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan()
 }
 
-func (l *lesson) StepThroughSections() {
-	for _, s := range(l.sections) {
-		printAndWait(s)
+func printTableOfContents(al []lesson) {
+	fmt.Println(ansiFormat("Table of Contents", Bold))
+	for _, l := range(al) {
+		fmt.Printf("%d. %s\n", l.num, l.title)
 	}
 }
 
-func (l *lesson) AcceptCommand() {
+func (l *lesson) StepThroughSections() {
+	for _, s := range(l.sections) {
+		printAndWait(s.content)
+		s.AcceptCommand()
+	}
+}
+
+func (s *section) AcceptCommand() {
 	fmt.Println("")
 	reader := bufio.NewReader(os.Stdin)
 	input, err := reader.ReadString('\n')
 	checkError(err)
-	for strings.TrimSuffix(input, "\n") != l.expected {
+	for strings.TrimSuffix(input, "\n") != s.expected {
 		fmt.Println("Try again:")
 		input, err = reader.ReadString('\n')
 		checkError(err)
@@ -61,12 +75,13 @@ func (l *lesson) AcceptCommand() {
 
 func NewTourCommand() *cobra.Command {
 	var skipTo int
-	lessons := [...]lesson{
+	lessons := []lesson{
 		lesson{
 			1,
 			"Creating Workflows",
 			"",
-			[]string{`
+			[]section{
+				section{`
 You can use the
 
 ` + ansiFormat("argo submit", Bold) + `
@@ -76,17 +91,39 @@ command to bring a workflow spec into being. Try submitting the workflow above b
 ` + ansiFormat("argo submit hello.yaml", Bold) + ` 
 
 below.
-`},
-			"argo submit hello.yaml",
+
+> `,
+				"argo submit hello.yaml"},
+			},
 		},
 		lesson{
 			2,
 			"Monitoring Workflows",
 			"foo bar",
-			[]string{`
+			[]section{
+				section{`
 It's important to be able to view your workflows after you submit them. There are several commands you can use to help you do this; the first is argo get. The Argo CLI comes with the alias @latest that makes it easy to view a workflow that was just submitted.'
-`},
-			"argo list",
+
+Try typing 
+
+` + ansiFormat("argo get @latest") + `
+
+below.
+
+> `,
+				"argo get @latest",
+				},
+				section{`
+Another common task is viewing all of your workflows. You can do this by typing
+
+` + ansiFormat("argo list", Bold) + `
+
+below. 
+
+> `,
+				"argo list",
+				},
+			},
 		},
 	}
 
@@ -97,6 +134,8 @@ The Argo CLI makes it easy to get things done with Kubernetes.
 
 Because Argo Workflows are Kubernetes CRDs, nearly everything you can do with the Argo CLI can be done with kubectl. However, Argo CLI provides syntax checking, less typing, and nicer output.
 We'll give you the equivalent kubectl commands throughout this tour when applicable.
+
+Press ENTER to continue.
 `
 
 	simple := `Because they are CRDs, workflows are most easily defined with YAML. Here's an example of a simple workflow definition:
@@ -113,24 +152,31 @@ spec:
       image: docker/whalesay:latest
       command: [cowsay]
       args: ["hello world"]
-`, FgYellow)
+`,
+	FgYellow) + `
+
+Press ENTER to continue
+`
 
 	var command = &cobra.Command{
 		Use:   "tour",
 		Short: "tour the CLI",
 		Run: func(cmd *cobra.Command, args []string) {
-			printAndWait(intro)
-			printAndWait(simple)
+			if skipTo > 0 {
+				lessons = lessons[skipTo-1:]
+			} else {
+				printTableOfContents(lessons)
+				printAndWait(intro)
+				printAndWait(simple)
+			}
 			for _, l := range lessons {
 				l.Start()
 				l.StepThroughSections()
-				l.AcceptCommand()
 			}
 		},
 	}
 
 	command.Flags().IntVar(&skipTo, "lesson", 0, "Skip to a lesson number")
-
 	return command
 }
 
