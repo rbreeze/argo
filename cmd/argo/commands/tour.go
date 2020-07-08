@@ -92,13 +92,17 @@ func checkError(err error) {
 	}
 }
 
-func printAndWait(s string) {
+func printAndWait(s string) string {
 	fmt.Println(s)
 	fmt.Println(`
 Press ENTER to continue`,
 	)
-	scanner := bufio.NewScanner(os.Stdin)
-	scanner.Scan()
+	reader := bufio.NewReader(os.Stdin)
+	input, err := reader.ReadString('\n')
+	if err != nil {
+		log.Infof("Something went wrong getting input from stdin")
+	}
+	return input
 }
 
 func printTableOfContents(al []lesson) {
@@ -133,6 +137,7 @@ func (s *section) PromptAndExecute() {
 	}
 	fmt.Println(ansiFormat("\nNice job!\n", FgGreen, Bold))
 	if s.expected.workflow != nil {
+		fmt.Printf(ansiFormat("NOTE: We created a file in this directory for this lesson called %s.\n", FgYellow), s.expected.workflow.name)
 		f, err := os.Create(s.expected.workflow.name)
 		if err != nil {
 			log.Infof("Could not create required file %s to execute command", s.expected.workflow.name)
@@ -149,6 +154,14 @@ func (s *section) PromptAndExecute() {
 	err = cmd.Run()
 	if err != nil {
 		log.Infof("Internal error: %s", err)
+	}
+
+	if s.expected.workflow != nil {
+		response := printAndWait("Would you like to delete the file we created in this directory? (Y/N)")
+		if response == "Y" {
+			return
+			// TODO: Delete file
+		}
 	}
 }
 
@@ -170,7 +183,7 @@ command to bring a workflow spec into being.`,
 
 					command{
 						"argo submit hello.yaml",
-						"kubectl apply -f hello.yaml",
+						"kubectl apply -n argo -f hello.yaml",
 						&file{
 							"hello.yaml",
 							helloWorkflow,
