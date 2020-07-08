@@ -3,21 +3,72 @@ package commands
 import (
 	"bufio"
 	"fmt"
-	"github.com/spf13/cobra"
 	"os"
+	"os/exec"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
+
+	"github.com/spf13/cobra"
 )
 
+const argoArt = `
+                                       .─────────.         
+                                    ,─'           '─.      
+                                  ,'                 .
+                                ,'        .───.        .
+                               ;        ,'      .        :
+                               ;     .───.     .───.     :
+                              ┌─┐   ;  ●  :   ;  ●  :   ┌─┐
+                              │ │   :     ;   :     ;   │ │
+                              │ │    ╲   ╱     ╲   ╱    │ │
+                              │ │    ; ─'        ─':    │ │
+                              └─┘    │             │    └─┘
+                               :     │   (◝───◜)   │     ;
+                                ╲    │    '───'    │    ╱
+                                 '.  │             │  ,'
+                                   '.:             ;,'
+                                     ':           ;'
+                                      │           │
+                                      :           ;
+
+`
+
+const helloWorkflow = `apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: hello-world-
+spec:
+  entrypoint: whalesay
+  templates:
+  - name: whalesay
+    container:
+      image: docker/whalesay:latest
+      command: [cowsay]
+      args: ["hello world"]
+`
+
 type lesson struct {
-	num int;
-	title string;
-	description string;
-	sections []section;
+	num         int
+	title       string
+	description string
+	sections    []section
 }
 
 type section struct {
-	content string;
-	expected string;
+	content  string
+	expected command
+}
+
+type command struct {
+	argo     string
+	kubectl  string
+	workflow *file
+}
+
+type file struct {
+	name    string
+	content string
 }
 
 type Lesson interface {
@@ -37,39 +88,67 @@ func (l *lesson) Start() {
 
 func checkError(err error) {
 	if err != nil {
-		fmt.Errorf("Error: %s\n", err)
+		log.Infof("Error: %s\n", err)
 	}
 }
 
 func printAndWait(s string) {
 	fmt.Println(s)
+	fmt.Println(`
+Press ENTER to continue`,
+	)
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan()
 }
 
 func printTableOfContents(al []lesson) {
-	fmt.Println(ansiFormat("Table of Contents", Bold))
-	for _, l := range(al) {
+	fmt.Println("===================")
+	fmt.Println(ansiFormat(" Table of Contents", Bold))
+	for _, l := range al {
 		fmt.Printf("%d. %s\n", l.num, l.title)
 	}
+	fmt.Println("===================")
 }
 
 func (l *lesson) StepThroughSections() {
-	for _, s := range(l.sections) {
-		printAndWait(s.content)
-		s.AcceptCommand()
+	for _, s := range l.sections {
+		fmt.Println(s.content)
+		s.PromptAndExecute()
 	}
 }
 
-func (s *section) AcceptCommand() {
+func (s *section) PromptAndExecute() {
+	fmt.Println("Try typing")
+	fmt.Println(ansiFormat(s.expected.argo, Bold))
 	fmt.Println("")
+	fmt.Printf("> ")
 	reader := bufio.NewReader(os.Stdin)
 	input, err := reader.ReadString('\n')
 	checkError(err)
-	for strings.TrimSuffix(input, "\n") != s.expected {
-		fmt.Println("Try again:")
+	for strings.TrimSuffix(input, "\n") != s.expected.argo {
+		fmt.Println("Try again!")
+		fmt.Printf("> ")
 		input, err = reader.ReadString('\n')
 		checkError(err)
+	}
+	fmt.Println(ansiFormat("\nNice job!\n", FgGreen, Bold))
+	if s.expected.workflow != nil {
+		f, err := os.Create(s.expected.workflow.name)
+		if err != nil {
+			log.Infof("Could not create required file %s to execute command", s.expected.workflow.name)
+		}
+		_, err = f.WriteString(s.expected.workflow.content)
+		if err != nil {
+			log.Infof("Could not write to file %s to execute command", s.expected.workflow.name)
+		}
+	}
+	args := strings.Split(s.expected.argo, " ")
+	cmd := exec.Command(args[0], args[1:]...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Run()
+	if err != nil {
+		log.Infof("Internal error: %s", err)
 	}
 }
 
@@ -81,19 +160,23 @@ func NewTourCommand() *cobra.Command {
 			"Creating Workflows",
 			"",
 			[]section{
-				section{`
+				section{
+					`
 You can use the
 
 ` + ansiFormat("argo submit", Bold) + `
 
-command to bring a workflow spec into being. Try submitting the workflow above by typing:
+command to bring a workflow spec into being.`,
 
-` + ansiFormat("argo submit hello.yaml", Bold) + ` 
-
-below.
-
-> `,
-				"argo submit hello.yaml"},
+					command{
+						"argo submit hello.yaml",
+						"kubectl apply -f hello.yaml",
+						&file{
+							"hello.yaml",
+							helloWorkflow,
+						},
+					},
+				},
 			},
 		},
 		lesson{
@@ -101,27 +184,25 @@ below.
 			"Monitoring Workflows",
 			"foo bar",
 			[]section{
-				section{`
-It's important to be able to view your workflows after you submit them. There are several commands you can use to help you do this; the first is argo get. The Argo CLI comes with the alias @latest that makes it easy to view a workflow that was just submitted.'
-
-Try typing 
-
-` + ansiFormat("argo get @latest") + `
-
-below.
-
-> `,
-				"argo get @latest",
+				section{
+					`
+It's important to be able to view your workflows after you submit them. There are several commands you can use to help you do this; the first is argo get. The Argo CLI comes with the alias @latest that makes it easy to view a workflow that was just submitted.
+`,
+					command{
+						"argo get @latest",
+						"kubectl get...",
+						nil,
+					},
 				},
-				section{`
-Another common task is viewing all of your workflows. You can do this by typing
-
-` + ansiFormat("argo list", Bold) + `
-
-below. 
-
-> `,
-				"argo list",
+				section{
+					`
+Another common task is viewing all of your workflows.
+`,
+					command{
+						"argo list",
+						"kubectl foo",
+						nil,
+					},
 				},
 			},
 		},
@@ -134,29 +215,11 @@ The Argo CLI makes it easy to get things done with Kubernetes.
 
 Because Argo Workflows are Kubernetes CRDs, nearly everything you can do with the Argo CLI can be done with kubectl. However, Argo CLI provides syntax checking, less typing, and nicer output.
 We'll give you the equivalent kubectl commands throughout this tour when applicable.
-
-Press ENTER to continue.
 `
 
 	simple := `Because they are CRDs, workflows are most easily defined with YAML. Here's an example of a simple workflow definition:
 
-` + ansiFormat(`apiVersion: argoproj.io/v1alpha1
-kind: Workflow
-metadata:
-  generateName: hello-world-
-spec:
-  entrypoint: whalesay
-  templates:
-  - name: whalesay
-    container:
-      image: docker/whalesay:latest
-      command: [cowsay]
-      args: ["hello world"]
-`,
-	FgYellow) + `
-
-Press ENTER to continue
-`
+` + ansiFormat(helloWorkflow, FgYellow)
 
 	var command = &cobra.Command{
 		Use:   "tour",
@@ -166,6 +229,7 @@ Press ENTER to continue
 				lessons = lessons[skipTo-1:]
 			} else {
 				printTableOfContents(lessons)
+				fmt.Println(argoArt)
 				printAndWait(intro)
 				printAndWait(simple)
 			}
@@ -176,8 +240,6 @@ Press ENTER to continue
 		},
 	}
 
-	command.Flags().IntVar(&skipTo, "lesson", 0, "Skip to a lesson number")
+	command.Flags().IntVarP(&skipTo, "lesson", "l", 0, "Skip to a lesson number")
 	return command
 }
-
-
