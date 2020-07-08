@@ -13,24 +13,26 @@ import (
 )
 
 const argoArt = `
-                                       .─────────.         
-                                    ,─'           '─.      
-                                  ,'                 .
-                                ,'        .───.        .
-                               ;        ,'      .        :
-                               ;     .───.     .───.     :
-                              ┌─┐   ;  ●  :   ;  ●  :   ┌─┐
-                              │ │   :     ;   :     ;   │ │
-                              │ │    ╲   ╱     ╲   ╱    │ │
-                              │ │    ; ─'        ─':    │ │
-                              └─┘    │             │    └─┘
-                               :     │   (◝───◜)   │     ;
-                                ╲    │    '───'    │    ╱
-                                 '.  │             │  ,'
-                                   '.:             ;,'
-                                     ':           ;'
-                                      │           │
-                                      :           ;
+                                 
+             .─────────.         
+          ,─'           '─.      
+        ,'                 '.    
+      ,'        .───.        '.  
+     ;        ,'     '.        : 
+     ;     .───.     .───.     : 
+    ┌─┐   ;  ●  :   ;  ●  :   ┌─┐
+    │ │   :     ;   :     ;   │ │
+    │ │    ╲   ╱     ╲   ╱    │ │
+    │ │    ;'─'       '─':    │ │
+    └─┘    │             │    └─┘
+     :     │   (◝───◜)   │     ; 
+      ╲    │    '───'    │    ╱  
+       '.  │             │  ,'   
+         '.:             ;,'     
+           ':           ;'       
+            │           │        
+            :           ;        
+
 
 `
 
@@ -81,9 +83,13 @@ type Section interface {
 }
 
 func (l *lesson) Start() {
+	printDivider(20)
 	heading := fmt.Sprintf("Lesson %d", l.num)
 	fmt.Println(ansiFormat(heading, Bold))
 	fmt.Println(ansiFormat(l.title, Bold))
+	printDivider(20)
+
+	fmt.Println(l.description)
 }
 
 func checkError(err error) {
@@ -92,11 +98,21 @@ func checkError(err error) {
 	}
 }
 
-func printAndWait(s string) string {
+func printDivider(len int) {
+	for len > 0 {
+		fmt.Printf("=")
+		len--
+	}
+	fmt.Println("")
+}
+
+func printAndWait(s string, enter bool) string {
 	fmt.Println(s)
-	fmt.Println(`
+	if enter {
+		fmt.Println(`
 Press ENTER to continue`,
-	)
+		)
+	}
 	reader := bufio.NewReader(os.Stdin)
 	input, err := reader.ReadString('\n')
 	if err != nil {
@@ -106,12 +122,12 @@ Press ENTER to continue`,
 }
 
 func printTableOfContents(al []lesson) {
-	fmt.Println("===================")
+	printDivider(20)
 	fmt.Println(ansiFormat(" Table of Contents", Bold))
 	for _, l := range al {
 		fmt.Printf("%d. %s\n", l.num, l.title)
 	}
-	fmt.Println("===================")
+	printDivider(20)
 }
 
 func (l *lesson) StepThroughSections() {
@@ -135,16 +151,16 @@ func (s *section) PromptAndExecute() {
 		input, err = reader.ReadString('\n')
 		checkError(err)
 	}
-	fmt.Println(ansiFormat("\nNice job!\n", FgGreen, Bold))
 	if s.expected.workflow != nil {
-		fmt.Printf(ansiFormat("NOTE: We created a file in this directory for this lesson called %s.\n", FgYellow), s.expected.workflow.name)
 		f, err := os.Create(s.expected.workflow.name)
 		if err != nil {
 			log.Infof("Could not create required file %s to execute command", s.expected.workflow.name)
+			return
 		}
 		_, err = f.WriteString(s.expected.workflow.content)
 		if err != nil {
 			log.Infof("Could not write to file %s to execute command", s.expected.workflow.name)
+			return
 		}
 	}
 	args := strings.Split(s.expected.argo, " ")
@@ -154,13 +170,22 @@ func (s *section) PromptAndExecute() {
 	err = cmd.Run()
 	if err != nil {
 		log.Infof("Internal error: %s", err)
+		return
 	}
 
+	fmt.Println(ansiFormat("\nNice job!\n", FgGreen, Bold))
+
 	if s.expected.workflow != nil {
-		response := printAndWait("Would you like to delete the file we created in this directory? (Y/N)")
-		if response == "Y" {
-			return
-			// TODO: Delete file
+		fmt.Print(ansiFormat("NOTE: ", FgYellow, Bold))
+		fmt.Print(ansiFormat("We created a file in this directory for this lesson called ", FgYellow))
+		fmt.Printf(ansiFormat("%s.\n", FgYellow, Bold), s.expected.workflow.name)
+		response := printAndWait(ansiFormat(fmt.Sprintf("Would you like to delete %s from this directory? (Y/N)", s.expected.workflow.name), FgRed, Bold), false)
+		if strings.TrimSuffix(response, "\n") == "Y" {
+			err := os.Remove(s.expected.workflow.name)
+			if err != nil {
+				log.Infof("Error removing %s from current directory", s.expected.workflow.name)
+			}
+			fmt.Println(fmt.Sprintf(ansiFormat("Removed %s from current directory", FgYellow), s.expected.workflow.name))
 		}
 	}
 }
@@ -195,15 +220,15 @@ command to bring a workflow spec into being.`,
 		lesson{
 			2,
 			"Monitoring Workflows",
-			"foo bar",
+			"It's important to be able to view your workflows after you submit them. There are several commands you can use to help you do this.",
 			[]section{
 				section{
 					`
-It's important to be able to view your workflows after you submit them. There are several commands you can use to help you do this; the first is argo get. The Argo CLI comes with the alias @latest that makes it easy to view a workflow that was just submitted.
+The first is argo get. The Argo CLI comes with the alias @latest that makes it easy to view a workflow that was just submitted.
 `,
 					command{
 						"argo get @latest",
-						"kubectl get...",
+						"",
 						nil,
 					},
 				},
@@ -213,7 +238,56 @@ Another common task is viewing all of your workflows.
 `,
 					command{
 						"argo list",
-						"kubectl foo",
+						"",
+						nil,
+					},
+				},
+			},
+		},
+		lesson{
+			3,
+			"Managing Workflows",
+			"Once you've created a few workflows, you may want to perform various actions on them. In this lesson you'll learn how to delete, suspend, resume, and stop workflows with the Argo CLI.",
+			[]section{
+				section{
+					`
+First, let's try to suspend the workflow we submitted in the last lesson. We can do this with the argo suspend command. 
+A suspended workflow will not execute new pods or perform new operations while the flag is set, and is still considered running.
+`,
+					command{
+						"argo suspend @latest",
+						"",
+						nil,
+					},
+				},
+				section{
+					`
+Next, we can resume the workflow that we just suspended with the argo resume command.
+`,
+					command{
+						"argo resume @latest",
+						"",
+						nil,
+					},
+				},
+				section{
+					`
+Now let's stop the same workflow by using the argo stop command. 
+Stopping, in contrast to suspending, stops all running pods, fails their nodes, and then fails the workflow
+`,
+					command{
+						"argo stop @latest",
+						"",
+						nil,
+					},
+				},
+				section{
+					`
+Finally, we'll delete the workflow we've been working with with the argo delete command.'
+`,
+					command{
+						"argo delete @latest",
+						"",
 						nil,
 					},
 				},
@@ -243,8 +317,8 @@ We'll give you the equivalent kubectl commands throughout this tour when applica
 			} else {
 				printTableOfContents(lessons)
 				fmt.Println(argoArt)
-				printAndWait(intro)
-				printAndWait(simple)
+				printAndWait(intro, true)
+				printAndWait(simple, true)
 			}
 			for _, l := range lessons {
 				l.Start()
