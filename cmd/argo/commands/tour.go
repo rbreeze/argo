@@ -39,7 +39,7 @@ const argoArt = `
 const helloWorkflow = `apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
-  generateName: hello-world-
+  generateName: argo-tour-hello-
 spec:
   entrypoint: whalesay
   templates:
@@ -48,6 +48,45 @@ spec:
       image: docker/whalesay:latest
       command: [cowsay]
       args: ["hello world"]
+`
+
+const helloTemplate = `apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  generateName: argo-tour-hello-template-
+  namespace: argo
+spec:
+  templates:
+    - name: argosay
+      container:
+        name: main
+        image: 'argoproj/argosay:v2'
+        command:
+          - /argosay
+        args:
+          - echo
+          - hello argo!
+`
+
+const helloCron = `apiVersion: argoproj.io/v1alpha1
+kind: CronWorkflow
+metadata:
+  generateName: argo-tour-hello-cron-
+  namespace: argo
+spec:
+  schedule: '* * * * *'
+  workflowSpec:
+    entrypoint: argosay
+    templates:
+      - name: argosay
+        container:
+          name: main
+          image: 'argoproj/argosay:v2'
+          command:
+            - /argosay
+          args:
+            - echo
+            - hello argo!
 `
 
 type lesson struct {
@@ -190,8 +229,14 @@ func (s *section) PromptAndExecute() {
 	}
 }
 
+type tourOptions struct {
+	skipToLesson  int
+	skipToSection int
+	only          bool
+}
+
 func NewTourCommand() *cobra.Command {
-	var skipTo int
+	opt := &tourOptions{}
 	lessons := []lesson{
 		lesson{
 			1,
@@ -293,6 +338,48 @@ Finally, we'll delete the workflow we've been working with with the argo delete 
 				},
 			},
 		},
+		lesson{
+			4,
+			"Workflow Templates",
+			"Argo offers a powerful way to easily create similar workflows with Workflow Templates. This lesson will walk through creating and managing a simple workflow template.",
+			[]section{
+				section{
+					`
+First we'll create a workflow template using the argo template create command. Here's an example of a simple workflow template:
+
+` + ansiFormat(helloTemplate, FgYellow),
+					command{
+						"argo template create hello-template.yaml",
+						"",
+						&file{
+							"hello-template.yaml",
+							helloTemplate,
+						},
+					},
+				},
+			},
+		},
+		lesson{
+			5,
+			"Cron Workflows",
+			"Cron workflows make it easy to run a workflow on a schedule. This lesson will walk you through the argo cron command.",
+			[]section{
+				section{
+					`
+First we'll create a cron workflow using the argo cron create command. Here's an example of a simple cron workflow:
+
+` + ansiFormat(helloCron, FgYellow),
+					command{
+						"argo cron create hello-cron.yaml",
+						"",
+						&file{
+							"hello-cron.yaml",
+							helloCron,
+						},
+					},
+				},
+			},
+		},
 	}
 
 	intro := `
@@ -304,7 +391,7 @@ Because Argo Workflows are Kubernetes CRDs, nearly everything you can do with th
 We'll give you the equivalent kubectl commands throughout this tour when applicable.
 `
 
-	simple := `Because they are CRDs, workflows are most easily defined with YAML. Here's an example of a simple workflow definition:
+	simple := `Workflows are most often defined with YAML. Here's an example of a simple workflow definition:
 
 ` + ansiFormat(helloWorkflow, FgYellow)
 
@@ -312,8 +399,34 @@ We'll give you the equivalent kubectl commands throughout this tour when applica
 		Use:   "tour",
 		Short: "tour the CLI",
 		Run: func(cmd *cobra.Command, args []string) {
-			if skipTo > 0 {
-				lessons = lessons[skipTo-1:]
+			if opt.skipToSection > 0 && opt.skipToLesson == 0 {
+				log.Info("--section should only be used with --lesson")
+				return
+			}
+			if opt.only && opt.skipToLesson == 0 {
+				log.Infof("--only should only be used with --lesson")
+			}
+			if opt.skipToLesson > len(lessons) {
+				log.Infof("Lesson %d does not exist", opt.skipToLesson)
+				return
+			}
+			if opt.skipToLesson > 0 {
+				if opt.skipToSection > len(lessons[opt.skipToLesson-1].sections) {
+					log.Infof("Section %d does not exist in Lesson %d", opt.skipToSection, opt.skipToLesson)
+					return
+				}
+				if opt.only {
+					lessons = []lesson{lessons[opt.skipToLesson-1]}
+				} else {
+					lessons = lessons[opt.skipToLesson-1:]
+				}
+				if opt.skipToSection > 0 {
+					if opt.only {
+						lessons[0].sections = []section{lessons[0].sections[opt.skipToSection-1]}
+					} else {
+						lessons[opt.skipToLesson-1].sections = lessons[opt.skipToLesson].sections[opt.skipToSection-1:]
+					}
+				}
 			} else {
 				printTableOfContents(lessons)
 				fmt.Println(argoArt)
@@ -327,6 +440,8 @@ We'll give you the equivalent kubectl commands throughout this tour when applica
 		},
 	}
 
-	command.Flags().IntVarP(&skipTo, "lesson", "l", 0, "Skip to a lesson number")
+	command.Flags().IntVarP(&opt.skipToLesson, "lesson", "l", 0, "Skip to a lesson number")
+	command.Flags().IntVarP(&opt.skipToSection, "section", "x", 0, "Skip to a section number within a lesson")
+	command.Flags().BoolVarP(&opt.only, "only", "o", false, "Only go through the specified lesson and/or section")
 	return command
 }
