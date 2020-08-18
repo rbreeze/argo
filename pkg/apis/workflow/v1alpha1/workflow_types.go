@@ -2149,6 +2149,7 @@ type Counter struct {
 type Memoize struct {
 	Key   string `json:"key" protobuf:"bytes,1,opt,name=key"`
 	Cache *Cache `json:"cache" protobuf:"bytes,2,opt,name=cache"`
+	TTLSeconds int32 `json:"ttlSeconds"`
 }
 
 type MemoizationStatus struct {

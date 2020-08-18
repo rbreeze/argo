@@ -3596,9 +3596,13 @@ spec:
                         type: object
                       key:
                         type: string
+                      ttlSeconds:
+                        format: int32
+                        type: integer
                     required:
                     - cache
                     - key
+                    - ttlSeconds
                     type: object
                   metadata:
                     properties:
@@ -11402,9 +11406,13 @@ spec:
                         type: object
                       key:
                         type: string
+                      ttlSeconds:
+                        format: int32
+                        type: integer
                     required:
                     - cache
                     - key
+                    - ttlSeconds
                     type: object
                   metadata:
                     properties:
@@ -17615,9 +17623,13 @@ spec:
                             type: object
                           key:
                             type: string
+                          ttlSeconds:
+                            format: int32
+                            type: integer
                         required:
                         - cache
                         - key
+                        - ttlSeconds
                         type: object
                       metadata:
                         properties:
